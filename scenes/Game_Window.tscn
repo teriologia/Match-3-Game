@@ -1,0 +1,138 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://Art/backgroundv1.jpg" type="Texture" id=1]
+[ext_resource path="res://Art/Top_ui.png" type="Texture" id=2]
+[ext_resource path="res://Art/bottom_ui.png" type="Texture" id=3]
+[ext_resource path="res://Scripts/Grid.gd" type="Script" id=4]
+[ext_resource path="res://Scripts/ice_holder.gd" type="Script" id=5]
+[ext_resource path="res://Scripts/lock_holder.gd" type="Script" id=6]
+[ext_resource path="res://Scripts/concreate_holder.gd" type="Script" id=7]
+
+[node name="Game_Window" type="Node2D"]
+
+[node name="Background" type="TextureRect" parent="." index="0"]
+
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 2.0
+margin_right = 514.0
+margin_bottom = 960.0
+rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
+mouse_filter = 1
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 1
+texture = ExtResource( 1 )
+stretch_mode = 0
+
+[node name="Top_ui" type="TextureRect" parent="." index="1"]
+
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_top = 11.0
+margin_right = 576.0
+margin_bottom = 161.0
+rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
+mouse_filter = 1
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 1
+texture = ExtResource( 2 )
+stretch_mode = 0
+
+[node name="Bottom_ui" type="TextureRect" parent="." index="2"]
+
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = -2.0
+margin_top = 917.0
+margin_right = 574.0
+margin_bottom = 1027.0
+rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
+mouse_filter = 1
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 1
+texture = ExtResource( 3 )
+stretch_mode = 0
+_sections_unfolded = [ "Rect" ]
+
+[node name="Grid" type="Node2D" parent="." index="3"]
+
+script = ExtResource( 4 )
+width = 8
+height = 10
+x_start = 42
+y_start = 820
+offset = 70
+y_offset = -1
+spaces = PoolVector2Array( 1, 4, 1, 5, 2, 4, 2, 5, 5, 4, 5, 5, 6, 4, 6, 5, 0, 0, 7, 0, 0, 9, 7, 9 )
+ice_spaces = PoolVector2Array( 3, 0, 4, 0, 3, 9, 4, 9 )
+lock_spaces = PoolVector2Array( 3, 2, 4, 2, 7, 2, 7, 3 )
+concreate_spaces = PoolVector2Array( 1, 1, 0, 6, 5, 6, 7, 7 )
+
+[node name="ice_holder" type="Node2D" parent="." index="4"]
+
+script = ExtResource( 5 )
+
+[node name="lock_holder" type="Node2D" parent="." index="5"]
+
+script = ExtResource( 6 )
+
+[node name="concreate_holder" type="Node2D" parent="." index="6"]
+
+script = ExtResource( 7 )
+
+[node name="destroy_timer" type="Timer" parent="." index="7"]
+
+process_mode = 1
+wait_time = 0.5
+one_shot = true
+autostart = false
+
+[node name="Collapse_timer" type="Timer" parent="." index="8"]
+
+process_mode = 1
+wait_time = 0.2
+one_shot = true
+autostart = false
+
+[node name="Refill_timer" type="Timer" parent="." index="9"]
+
+process_mode = 1
+wait_time = 0.3
+one_shot = true
+autostart = false
+
+[connection signal="damage_concreate" from="Grid" to="concreate_holder" method="_on_Grid_damage_concreate"]
+
+[connection signal="damage_ice" from="Grid" to="ice_holder" method="_on_Grid_damage_ice"]
+
+[connection signal="damage_lock" from="Grid" to="lock_holder" method="_on_Grid_damage_lock"]
+
+[connection signal="make_concreate" from="Grid" to="concreate_holder" method="_on_Grid_make_concreate"]
+
+[connection signal="make_ice" from="Grid" to="ice_holder" method="_on_Grid_make_ice"]
+
+[connection signal="make_lock" from="Grid" to="lock_holder" method="_on_Grid_make_lock"]
+
+[connection signal="remove_lock" from="lock_holder" to="Grid" method="_on_lock_holder_remove_lock"]
+
+[connection signal="remove_concreate" from="concreate_holder" to="Grid" method="_on_concreate_holder_remove_concreate"]
+
+[connection signal="timeout" from="destroy_timer" to="Grid" method="_on_destroy_timer_timeout"]
+
+[connection signal="timeout" from="Collapse_timer" to="Grid" method="_on_Collapse_timer_timeout"]
+
+[connection signal="timeout" from="Refill_timer" to="Grid" method="_on_Refill_timer_timeout"]
+
+
