@@ -14,6 +14,7 @@ export (PoolVector2Array) var spaces;
 export (PoolVector2Array) var ice_spaces;
 export (PoolVector2Array) var lock_spaces;
 export (PoolVector2Array) var concreate_spaces;
+export (PoolVector2Array) var slime_spaces;
 
 signal damage_ice;
 signal make_ice;
@@ -21,6 +22,8 @@ signal make_lock;
 signal damage_lock;
 signal make_concreate;
 signal damage_concreate;
+signal make_slime;
+signal damage_slime;
 
 var all_possible_pieces = [
 preload("res://scenes/Yellow_piece.tscn"),
@@ -30,6 +33,7 @@ preload("res://scenes/Green_purple_piece.tscn"),
 preload("res://scenes/Purple_yellow_piece.tscn"),
 ];
 
+var damaged_slime = false;
 var piece_one = null;
 var piece_two = null;
 var last_place = Vector2(0,0);
@@ -49,12 +53,15 @@ func _ready():
 	spawn_ice();
 	spawn_lock();
 	spawn_concreate();
+	spawn_slime();
 	
 func check_non_movable(place):
 	if is_in_array(spaces, place):
 		return true;
 	if is_in_array(concreate_spaces, place):
 		return true
+	if is_in_array(slime_spaces, place):
+		return true;
 	return false;
 	
 func restricted_move(place):
@@ -104,6 +111,10 @@ func spawn_lock():
 func spawn_concreate():
 	for i in concreate_spaces.size():
 		emit_signal("make_concreate", concreate_spaces[i]);
+		
+func spawn_slime():
+	for i in slime_spaces.size():
+		emit_signal("make_slime", slime_spaces[i]);
 
 func match_at(i, j, color):
 	if i>1:
@@ -245,11 +256,22 @@ func check_concreate(column, row):
 		emit_signal("damage_concreate", Vector2(column, row + 1));
 	if row > 0:
 		emit_signal("damage_concreate", Vector2(column, row - 1));
+		
+func check_slime(column, row):
+	if column < width - 1:
+		emit_signal("damage_slime", Vector2(column + 1, row));
+	if column > 0:
+		emit_signal("damage_slime", Vector2(column - 1, row));
+	if row < height - 1:
+		emit_signal("damage_slime", Vector2(column, row + 1));
+	if row > 0:
+		emit_signal("damage_slime", Vector2(column, row - 1));
 
 func damage_spacial_block(column, row):
 	emit_signal("damage_ice", Vector2(column,row));
 	emit_signal("damage_lock",Vector2(column,row));
 	check_concreate( column, row );
+	check_slime( column,row);
 	pass;
 
 func _on_destroy_timer_timeout():
@@ -299,8 +321,48 @@ func after_refill():
 					find_matches()
 					get_parent().get_node("destroy_timer").start();
 					return;
+	if !damaged_slime:
+		generate_slime();
 	state = move;
 	move_checked = false;
+	damaged_slime = false;
+
+func generate_slime():
+	if slime_spaces.size() > 0:
+		var slime_made = false;
+		var slime_tracker = 0;
+		while !slime_made and slime_tracker <100:
+			var random_number = floor(rand_range(0, slime_spaces.size()));
+			var current_x = slime_spaces[random_number].x;
+			var current_y = slime_spaces[random_number].y;
+			var neighbor = find_normal_neigbor(current_x, current_y);
+			
+			if neighbor != null:
+				all_pieces[neighbor.x][neighbor.y].queue_free();
+				all_pieces[neighbor.x][neighbor.y] = null;
+				slime_spaces.append(Vector2(neighbor.x, neighbor.y));
+				emit_signal("make_slime", Vector2(neighbor.x, neighbor.y));
+				slime_made = true;
+			slime_tracker += 1;
+	pass
+	 
+
+func find_normal_neigbor(column, row):
+	if is_in_grid(Vector2(column+1, row)):
+		if all_pieces[column +1][row] != null:
+			return Vector2(column +1, row);
+	if is_in_grid(Vector2(column-1, row)):
+		if all_pieces[column -1][row] != null:
+			return Vector2(column -1, row);
+	if is_in_grid(Vector2(column, row+1)):
+		if all_pieces[column][row+1] != null:
+			return Vector2(column, row+1);
+	if is_in_grid(Vector2(column, row-1)):
+		if all_pieces[column][row-1] != null:
+			return Vector2(column, row-1);
+			
+	return null;
+	pass
 
 func _on_Refill_timer_timeout():
 	refill_columns();
@@ -318,9 +380,17 @@ func _on_concreate_holder_remove_concreate(place):
 			concreate_spaces.remove(i);
 	pass # replace with function body
 	
+
+func _on_Slime_holder_remove_slime(place):
+	damaged_slime = true;
+	for i in range(slime_spaces.size() - 1,-1,-1):
+		if slime_spaces[i] == place:
+			slime_spaces.remove(i);
+	pass # replace with function body
+
+
+
 func _process(delta):
 	if state == move:
 		touch_input();
-
-
 
